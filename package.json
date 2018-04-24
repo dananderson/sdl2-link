@@ -1,0 +1,26 @@
+{
+  "name": "sdl2-link",
+  "version": "1.0.0",
+  "main": "lib/",
+  "description": "SDL2 bindings for Node",
+  "requires": true,
+  "dependencies": {
+    "ref-struct-di": "^1.1.0",
+    "ref-array-di": "^1.2.1",
+    "ref-union-di": "^1.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dananderson/sdl2-link.git"
+  },
+  "author": "Daniel Anderson <dan.anderson.oss@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "sdl2-link",
+    "sdl",
+    "sdl2"
+  ]
+}
