@@ -24,7 +24,7 @@ const FRAME_TIME_MS = 1000 / 60;
 
 SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
 
-let window = SDL2.SDL_CreateWindow("Basic Window", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL);
+let window = SDL2.SDL_CreateWindow(ref.allocCString("Basic Window"), 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL);
 
 let renderer = SDL2.SDL_CreateRenderer(window, -1,
     SDL2.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL2.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
