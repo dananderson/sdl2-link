@@ -1,7 +1,7 @@
 {
   "name": "sdl2-link",
   "version": "1.0.0",
-  "main": "lib/",
+  "main": "index.js",
   "description": "SDL2 bindings for Node",
   "requires": true,
   "dependencies": {
