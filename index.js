@@ -14,48 +14,75 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const SDL_LIBRARY_LOADER = {
-    'SDL2': './lib/util-sdl2-library',
-    'SDL2_image': './lib/util-sdl2-image-library',
-    'SDL2_ttf': './lib/util-sdl2-ttf-library',
+const SDL_LIBRARIES = {
+    'SDL2': require('./lib/util-sdl2-library'),
+    'SDL2_image': require('./lib/util-sdl2-image-library'),
+    'SDL2_ttf': require('./lib/util-sdl2-ttf-library'),
 };
 
 function extendType(ref, type) {
-    type.toBuffer = jsObject => ref.alloc(type, jsObject);
+    type.alloc = jsObject => ref.alloc(type, jsObject);
 
     return type;
 }
 
-module.exports = function(options) {
-    console.assert(options.ffi, 'ffi interface must be provided.');
-    console.assert(options.ref, 'ref interface must be provided.');
+function loadFFIPackage(options) {
+    let ffi;
 
-    if (!options.lib) {
-        options.lib = 'SDL2';
-    }
+    console.assert(options.ffi_package, 'FFI package must be provided. Package is an object with ffi and ref implementations.');
+    console.assert(options.ffi_package.ffi, 'ffi implementation not provided.');
+    console.assert(options.ffi_package.ref, 'ref implementation not provided.');
 
-    console.assert(options.lib in SDL_LIBRARY_LOADER,
-        `Invalid SDL library name: '${options.lib}'. Available library names: '${Object.keys(SDL_LIBRARY_LOADER).join("', '")}'`);
+    if ('StructType' in options.ffi_package) {
+        const fastcall = options.ffi_package;
 
-    const ref = options.ref;
-    const UnionType = require('ref-union-di')(ref);
-    const StructType = require('ref-struct-di')(ref);
-    const ArrayType = require('ref-array-di')(ref);
-    const complexTypes = {
-        'Union': definition => extendType(ref, UnionType(definition)),
-        'Struct': definition => extendType(ref, StructType(definition)),
-        'Array': ArrayType,
-    };
-
-    let libFile;
-
-    if (process.platform === 'win32') {
-        libFile = `${options.lib}.dll`;
-    } else if (process.platform === 'darwin') {
-        libFile = `lib${options.lib}.dylib`;
+        ffi = {
+            ffi: fastcall.ffi,
+            ref: fastcall.ref,
+            Array: fastcall.ArrayType,
+            Struct: fastcall.StructType,
+            Union: fastcall.UnionType,
+        };
     } else {
-        libFile = `lib${options.lib}.so`;
+        ffi = {
+            ffi: options.ffi_package.ffi,
+            ref: options.ffi_package.ref,
+            Array: require('ref-array-di')(options.ffi_package.ref),
+            Struct: require('ref-struct-di')(options.ffi_package.ref),
+            Union: require('ref-union-di')(options.ffi_package.ref),
+        };
     }
 
-    return require(SDL_LIBRARY_LOADER[options.lib])(options.ffi, ref, complexTypes, libFile);
+    const ref = ffi.ref;
+    const UnionType = ffi.Union;
+    const StructType = ffi.Struct;
+
+    ffi.Union = definition => extendType(ref, UnionType(definition));
+    ffi.Struct = definition => extendType(ref, StructType(definition));
+
+    return ffi;
+}
+
+module.exports = function(options) {
+    const ffi = loadFFIPackage(options);
+
+    console.assert(options.libs.length >= 1, `List of SDL libraries to load must be provided. Available library names: '${Object.keys(SDL_LIBRARIES).join(', ')}'`);
+
+    options.libs.forEach((i) => {
+        console.assert(i in SDL_LIBRARIES, `Invalid SDL library name: ${i}. Available library names: '${Object.keys(SDL_LIBRARIES).join(', ')}'`);
+    });
+
+    const lib = {};
+
+    SDL_LIBRARIES['SDL2'].loadConstantsAndTypes(ffi, lib);
+
+    options.libs.forEach((i) => {
+        if (i !== 'SDL2') {
+            SDL_LIBRARIES[i].loadConstantsAndTypes(ffi, lib);
+        }
+
+        SDL_LIBRARIES[i].loadFunctions(ffi, lib);
+    });
+
+    return lib;
 };

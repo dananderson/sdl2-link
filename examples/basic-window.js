@@ -16,7 +16,7 @@
 
 const ref = require('ref-napi');
 const ffi = require('ffi-napi');
-const SDL2 = require('../lib')({ ffi: ffi, ref: ref });
+const SDL2 = require('..')({ ffi_package: { ffi: ffi, ref: ref }, libs: [ 'SDL2', 'SDL2_image', 'SDL2_ttf' ] });
 
 const SCREEN_WIDTH = 960;
 const SCREEN_HEIGHT = 480;
@@ -30,7 +30,7 @@ let renderer = SDL2.SDL_CreateRenderer(window, -1,
     SDL2.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL2.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 
 function loop() {
-    let eventBuffer = SDL2.SDL_Event.toBuffer();
+    let eventBuffer = SDL2.SDL_Event.alloc();
 
     while (SDL2.SDL_PollEvent(eventBuffer)) {
         let event = eventBuffer.deref();
@@ -46,7 +46,7 @@ function loop() {
     setTimeout(loop, FRAME_TIME_MS);
 
     SDL2.SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255);
-    SDL2.SDL_RenderFillRect(renderer, SDL2.SDL_Rect.toBuffer({ x: 0, y: 0, w: SCREEN_WIDTH, h: SCREEN_HEIGHT }));
+    SDL2.SDL_RenderFillRect(renderer, SDL2.SDL_Rect.alloc({ x: 0, y: 0, w: SCREEN_WIDTH, h: SCREEN_HEIGHT }));
     SDL2.SDL_RenderPresent(renderer);
 }
 

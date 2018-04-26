@@ -29,7 +29,7 @@ npm install sdl2-link
 const ref = require('ref-napi');
 const ffi = require('ffi-napi');
 // Load the SDL2 library, including constants, structs, unions and functions.
-const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref });
+const SDL2 = require('sdl2-link')({ ffi_package: { ffi: ffi, ref: ref }, libs: [ 'SDL2', 'SDL2_image', 'SDL2_ttf' ] })
 
 // Start making calls to SDL.
 SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
