@@ -24,20 +24,20 @@ const FRAME_TIME_MS = 1000 / 60;
 
 SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
 
-let window = SDL2.SDL_CreateWindow(ref.allocCString("Basic Window"), 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL);
+const windowRef = ref.alloc('void**');
+const rendererRef = ref.alloc('void**');
 
-let renderer = SDL2.SDL_CreateRenderer(window, -1,
-    SDL2.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL2.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+SDL2.SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL, windowRef, rendererRef);
+
+const renderer = rendererRef.deref();
+const event = SDL2.SDL_Event.alloc();
+const screenRect = SDL2.SDL_Rect.alloc({ x: 0, y: 0, w: SCREEN_WIDTH, h: SCREEN_HEIGHT });
 
 function loop() {
-    let eventBuffer = SDL2.SDL_Event.alloc();
-
-    while (SDL2.SDL_PollEvent(eventBuffer)) {
-        let event = eventBuffer.deref();
-
-        if (event.type === SDL2.SDL_EventType.SDL_QUIT || event.type === SDL2.SDL_EventType.SDL_KEYUP) {
+    while (SDL2.SDL_PollEvent(event)) {
+        if (event.deref().type === SDL2.SDL_EventType.SDL_KEYUP) {
             SDL2.SDL_DestroyRenderer(renderer);
-            SDL2.SDL_DestroyWindow(window);
+            SDL2.SDL_DestroyWindow(windowRef.deref());
             SDL2.SDL_Quit();
             return;
         }
@@ -46,7 +46,7 @@ function loop() {
     setTimeout(loop, FRAME_TIME_MS);
 
     SDL2.SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255);
-    SDL2.SDL_RenderFillRect(renderer, SDL2.SDL_Rect.alloc({ x: 0, y: 0, w: SCREEN_WIDTH, h: SCREEN_HEIGHT }));
+    SDL2.SDL_RenderFillRect(renderer, screenRect);
     SDL2.SDL_RenderPresent(renderer);
 }
 

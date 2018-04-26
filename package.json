@@ -5,9 +5,10 @@
   "description": "SDL2 bindings for Node",
   "requires": true,
   "dependencies": {
-    "ref-struct-di": "^1.1.0",
-    "ref-array-di": "^1.2.1",
-    "ref-union-di": "^1.0.1"
+    "is-little-endian": "0.0.0",
+    "ref-array-di": "1.2.1",
+    "ref-struct-di": "1.1.0",
+    "ref-union-di": "1.0.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
