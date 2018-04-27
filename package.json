@@ -22,6 +22,9 @@
   "keywords": [
     "sdl2-link",
     "sdl",
-    "sdl2"
+    "sdl2",
+    "sdl2_image",
+    "sdl2_ttf",
+    "sdl2_mixer"
   ]
 }

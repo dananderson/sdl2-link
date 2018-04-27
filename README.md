@@ -2,20 +2,6 @@
 
 A node module that exposes the SDL2 C API to Javascript through the Foreign Function Interface (FFI).
 
-## Requirements
-
-SDL2 must be installed on your Linux, Mac and Windows system.
-
-Foreign Function Interface (FFI) modules:
-
-https://www.npmjs.com/package/ref-napi
-https://www.npmjs.com/package/ffi-napi
-
-or
-
-https://www.npmjs.com/package/ffi
-https://www.npmjs.com/package/ref
-
 ## Installation
 
 ```
@@ -24,21 +10,48 @@ npm install sdl2-link
 
 ## Usage
 
+Load SDL2.
+
 ```javascript
-// Import the FFI modules.
+// Import FFI modules.
 const ref = require('ref-napi');
 const ffi = require('ffi-napi');
-// Load the SDL2 library, including constants, structs, unions and functions.
-const SDL2 = require('sdl2-link')({ ffi_package: { ffi: ffi, ref: ref }, libs: [ 'SDL2', 'SDL2_image', 'SDL2_ttf' ] })
 
-// Start making calls to SDL.
+// Load the SDL2 library, including constants, structs, unions and functions.
+const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref })
+
+// Start making calls to SDL2.
 SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
 
-// etc
 ```
 
-## Status
+Load SDL2 with extensions. SDL_ttf, SDL_image and SDL_mixer are supported extensions.
 
-The module is currently in an unstable, experimental state.
+```javascript
+// Import FFI modules.
+const ref = require('ref-napi');
+const ffi = require('ffi-napi');
+
+// Load the SDL2 library with the SDL_ttf extension.
+const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref, extensions: [ 'SDL_ttf' ] });
+
+// Start making calls to SDL2.
+SDL2.TTF_Init();
+SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
+
+```
+
+## SDL2 Documentation
+
+The namespace (object) sdl2-link returns contains constants, structs and functions exactly as they appear in the SDL2 API. Use the official SDL2 documentation for reference.
+
+- [SDL2](https://wiki.libsdl.org/CategoryAPI)
+- [SDL2_ttf](https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf.html)
+- [SDL2_image](https://www.libsdl.org/projects/SDL_image/docs/SDL_image.html)
+- [SDL2_mixer](https://www.libsdl.org/projects/SDL_mixer/docs/index.html)
+
+## Notes
+
+- [fastcall](https://www.npmjs.com/package/fastcall) has a compatible FFI API, but it does not currently support some SDL function signatures (structs by value).
 
  

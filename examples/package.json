@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "sdl2-link": "file:../",
     "ffi-napi": "2.4.3",
     "ref-napi": "1.4.0"
   }

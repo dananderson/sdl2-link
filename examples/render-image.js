@@ -16,12 +16,19 @@
 
 const ref = require('ref-napi');
 const ffi = require('ffi-napi');
-const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref });
+const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref, extensions: [ 'SDL2_image' ] });
+
+const IMAGE_WIDTH = 640;
+const IMAGE_HEIGHT = 427;
 
 SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
 
-const window = SDL2.SDL_CreateWindow(ref.allocCString("Basic Window"), SDL2.SDL_WINDOWPOS_CENTERED, SDL2.SDL_WINDOWPOS_CENTERED, 960, 480, 0);
+const window = SDL2.SDL_CreateWindow(ref.allocCString("Render Image"), SDL2.SDL_WINDOWPOS_CENTERED, SDL2.SDL_WINDOWPOS_CENTERED, IMAGE_WIDTH, IMAGE_HEIGHT, 0);
 const renderer = SDL2.SDL_CreateRenderer(window, -1, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL);
+
+SDL2.IMG_Init(SDL2.IMG_INIT_JPEG);
+
+const texture = SDL2.IMG_LoadTexture(renderer, ref.allocCString('sample.jpeg'));
 
 loop();
 
@@ -30,8 +37,10 @@ function loop() {
 
     while (SDL2.SDL_PollEvent(eventRef)) {
         if (eventRef.deref().type === SDL2.SDL_EventType.SDL_KEYUP) {
+            SDL2.SDL_DestroyTexture(texture);
             SDL2.SDL_DestroyRenderer(renderer);
             SDL2.SDL_DestroyWindow(window);
+            SDL2.IMG_Quit();
             SDL2.SDL_Quit();
             return;
         }
@@ -39,7 +48,6 @@ function loop() {
 
     setTimeout(loop, 1000 / 60);
 
-    SDL2.SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255);
-    SDL2.SDL_RenderClear(renderer);
+    SDL2.SDL_RenderCopy(renderer, texture, SDL2.SDL_Rect.alloc({ x: 0, y: 0, w: IMAGE_WIDTH, h: IMAGE_HEIGHT }), ref.NULL);
     SDL2.SDL_RenderPresent(renderer);
 }

@@ -29,29 +29,16 @@ function extendType(ref, type) {
 function loadFFIPackage(options) {
     let ffi;
 
-    console.assert(options.ffi_package, 'FFI package must be provided. Package is an object with ffi and ref implementations.');
-    console.assert(options.ffi_package.ffi, 'ffi implementation not provided.');
-    console.assert(options.ffi_package.ref, 'ref implementation not provided.');
+    console.assert(options.ffi, 'ffi implementation not provided.');
+    console.assert(options.ref, 'ref implementation not provided.');
 
-    if ('StructType' in options.ffi_package) {
-        const fastcall = options.ffi_package;
-
-        ffi = {
-            ffi: fastcall.ffi,
-            ref: fastcall.ref,
-            Array: fastcall.ArrayType,
-            Struct: fastcall.StructType,
-            Union: fastcall.UnionType,
-        };
-    } else {
-        ffi = {
-            ffi: options.ffi_package.ffi,
-            ref: options.ffi_package.ref,
-            Array: require('ref-array-di')(options.ffi_package.ref),
-            Struct: require('ref-struct-di')(options.ffi_package.ref),
-            Union: require('ref-union-di')(options.ffi_package.ref),
-        };
-    }
+    ffi = {
+        ffi: options.ffi,
+        ref: options.ref,
+        Array: require('ref-array-di')(options.ref),
+        Struct: require('ref-struct-di')(options.ref),
+        Union: require('ref-union-di')(options.ref),
+    };
 
     const ref = ffi.ref;
     const UnionType = ffi.Union;
@@ -66,9 +53,13 @@ function loadFFIPackage(options) {
 module.exports = function(options) {
     const ffi = loadFFIPackage(options);
 
-    console.assert(options.libs.length >= 1, `List of SDL libraries to load must be provided. Available library names: '${Object.keys(SDL_LIBRARIES).join(', ')}'`);
+    let libs = [ 'SDL2' ];
 
-    options.libs.forEach((i) => {
+    if (Array.isArray(options.extensions)) {
+        libs = libs.concat(options.extensions);
+    }
+
+    libs.forEach((i) => {
         console.assert(i in SDL_LIBRARIES, `Invalid SDL library name: ${i}. Available library names: '${Object.keys(SDL_LIBRARIES).join(', ')}'`);
     });
 
@@ -76,7 +67,7 @@ module.exports = function(options) {
 
     SDL_LIBRARIES['SDL2'].loadConstantsAndTypes(ffi, lib);
 
-    options.libs.forEach((i) => {
+    libs.forEach((i) => {
         if (i !== 'SDL2') {
             SDL_LIBRARIES[i].loadConstantsAndTypes(ffi, lib);
         }
