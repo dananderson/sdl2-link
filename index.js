@@ -18,6 +18,7 @@ const SDL_LIBRARIES = {
     'SDL2': require('./lib/util-sdl2-library'),
     'SDL2_image': require('./lib/util-sdl2-image-library'),
     'SDL2_ttf': require('./lib/util-sdl2-ttf-library'),
+    'SDL2_mixer': require('./lib/util-sdl2-mixer-library'),
 };
 
 function extendType(ref, type) {
