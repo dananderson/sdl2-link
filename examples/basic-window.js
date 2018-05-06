@@ -14,32 +14,60 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const ref = require('ref-napi');
-const ffi = require('ffi-napi');
-const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref });
+const SDL = require('sdl2-link')();
 
-SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
+let gWindowPtr;
+let gRendererPtr;
 
-const window = SDL2.SDL_CreateWindow(ref.allocCString("Basic Window"), SDL2.SDL_WINDOWPOS_CENTERED, SDL2.SDL_WINDOWPOS_CENTERED, 960, 480, 0);
-const renderer = SDL2.SDL_CreateRenderer(window, -1, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL);
+function setup() {
+    // Initialize SDL video.
+    SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
-loop();
+    // Allocate buffers for the window and renderer references. In C terms, these buffers are analogous to a SDL_Window**
+    // and SDL_Renderer**.
+    const windowPtrPtr = SDL.ref.alloc('void*');
+    const rendererPtrPtr = SDL.ref.alloc('void*');
+
+    // Create an SDL window.
+    SDL.SDL_CreateWindowAndRenderer(
+        800,
+        600,
+        SDL.SDL_WindowFlags.SDL_WINDOW_OPENGL,
+        windowPtrPtr,
+        rendererPtrPtr);
+
+    // Dereference the window and renderer buffers so they are usable by SDL functions. In C terms, these buffers are now
+    // analogous to SDL_Window* and SDL_Renderer*.
+    gWindowPtr = windowPtrPtr.deref();
+    gRendererPtr = rendererPtrPtr.deref();
+}
+
+function shutdown() {
+    // Clean up renderer and window.
+    SDL.SDL_DestroyRenderer(gRendererPtr);
+    SDL.SDL_DestroyWindow(gWindowPtr);
+
+    // Clean up SDL.
+    SDL.SDL_Quit();
+}
 
 function loop() {
-    const eventRef = SDL2.SDL_Event.alloc();
-
-    while (SDL2.SDL_PollEvent(eventRef)) {
-        if (eventRef.deref().type === SDL2.SDL_EventType.SDL_KEYUP) {
-            SDL2.SDL_DestroyRenderer(renderer);
-            SDL2.SDL_DestroyWindow(window);
-            SDL2.SDL_Quit();
-            return;
-        }
+    // Stop the loop when a quit event (window closed) is received.
+    if(SDL.SDL_QuitRequested()) {
+        shutdown();
+        return;
     }
 
+    // Schedule the next frame @ 60 fps.
     setTimeout(loop, 1000 / 60);
 
-    SDL2.SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255);
-    SDL2.SDL_RenderClear(renderer);
-    SDL2.SDL_RenderPresent(renderer);
+    // Fill drawing area with blue.
+    SDL.SDL_SetRenderDrawColor(gRendererPtr, 0, 0, 200, 255);
+    SDL.SDL_RenderClear(gRendererPtr);
+
+    // Present the frame on screen.
+    SDL.SDL_RenderPresent(gRendererPtr);
 }
+
+setup();
+loop();

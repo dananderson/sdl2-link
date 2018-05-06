@@ -1,6 +1,6 @@
 # sdl2-link
 
-A node module that exposes the SDL2 C API to Javascript through the Foreign Function Interface (FFI).
+Node bindings for SDL 2.0, SDL_image, SDL_mixer and SDL_ttf.
 
 ## Installation
 
@@ -10,34 +10,26 @@ npm install sdl2-link
 
 ## Usage
 
-Load SDL2.
+Load SDL.
 
 ```javascript
-// Import FFI modules.
-const ref = require('ref-napi');
-const ffi = require('ffi-napi');
-
-// Load the SDL2 library, including constants, structs, unions and functions.
-const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref })
+// Load the SDL library, including constants, structs, unions and functions.
+const SDL = require('sdl2-link')()
 
 // Start making calls to SDL2.
-SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
+SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
 ```
 
-Load SDL2 with extensions. SDL_ttf, SDL_image and SDL_mixer are supported extensions.
+Load SDL with extensions. SDL_ttf, SDL_image and SDL_mixer are supported extensions.
 
 ```javascript
-// Import FFI modules.
-const ref = require('ref-napi');
-const ffi = require('ffi-napi');
+// Load the SDL library with the SDL_ttf extension.
+const SDL = require('sdl2-link')({ extensions: [ 'SDL_ttf' ] });
 
-// Load the SDL2 library with the SDL_ttf extension.
-const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref, extensions: [ 'SDL_ttf' ] });
-
-// Start making calls to SDL2.
-SDL2.TTF_Init();
-SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
+// Start making calls to SDL.
+SDL.TTF_Init();
+SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
 ```
 

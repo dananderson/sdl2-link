@@ -14,40 +14,66 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const ref = require('ref-napi');
-const ffi = require('ffi-napi');
-const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref, extensions: [ 'SDL2_image' ] });
+const SDL = require('sdl2-link')({ extensions: 'SDL2_image' });
 
-const IMAGE_WIDTH = 640;
-const IMAGE_HEIGHT = 427;
+let gWindowPtr;
+let gRendererPtr;
+let gTexturePtr;
 
-SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
+function setup() {
+    // Initialize SDL video and the image extension.
+    SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
+    SDL.IMG_Init(SDL.IMG_INIT_JPEG);
 
-const window = SDL2.SDL_CreateWindow(ref.allocCString("Render Image"), SDL2.SDL_WINDOWPOS_CENTERED, SDL2.SDL_WINDOWPOS_CENTERED, IMAGE_WIDTH, IMAGE_HEIGHT, 0);
-const renderer = SDL2.SDL_CreateRenderer(window, -1, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL);
+    // Allocate buffers for the window and renderer references. In C terms, these buffers are analogous to a SDL_Window**
+    // and SDL_Renderer**.
+    const windowPtrPtr = SDL.ref.alloc('void*');
+    const rendererPtrPtr = SDL.ref.alloc('void*');
 
-SDL2.IMG_Init(SDL2.IMG_INIT_JPEG);
+    // Create an SDL window.
+    SDL.SDL_CreateWindowAndRenderer(
+        640,
+        427,
+        SDL.SDL_WindowFlags.SDL_WINDOW_OPENGL,
+        windowPtrPtr,
+        rendererPtrPtr);
 
-const texture = SDL2.IMG_LoadTexture(renderer, ref.allocCString('sample.jpeg'));
+    // Dereference the window and renderer buffers so they are usable by SDL functions. In C terms, these buffers are now
+    // analogous to SDL_Window* and SDL_Renderer*.
+    gWindowPtr = windowPtrPtr.deref();
+    gRendererPtr = rendererPtrPtr.deref();
 
-loop();
+    // Use the image extension to load an image from file into an SDL texture.
+    gTexturePtr = SDL.IMG_LoadTexture(gRendererPtr, SDL.allocCString('sample.jpeg'));
+}
+
+function shutdown() {
+    // Clean up texture, renderer and window.
+    SDL.SDL_DestroyTexture(gTexturePtr);
+    SDL.SDL_DestroyRenderer(gRendererPtr);
+    SDL.SDL_DestroyWindow(gWindowPtr);
+
+    // Clean up the image extension and SDL itself.
+    SDL.IMG_Quit();
+    SDL.SDL_Quit();
+}
 
 function loop() {
-    const eventRef = SDL2.SDL_Event.alloc();
-
-    while (SDL2.SDL_PollEvent(eventRef)) {
-        if (eventRef.deref().type === SDL2.SDL_EventType.SDL_KEYUP) {
-            SDL2.SDL_DestroyTexture(texture);
-            SDL2.SDL_DestroyRenderer(renderer);
-            SDL2.SDL_DestroyWindow(window);
-            SDL2.IMG_Quit();
-            SDL2.SDL_Quit();
-            return;
-        }
+    // Stop the loop when a quit event (window closed) is received.
+    if(SDL.SDL_QuitRequested()) {
+        shutdown();
+        return;
     }
 
+    // Schedule the next frame @ 60 fps.
     setTimeout(loop, 1000 / 60);
 
-    SDL2.SDL_RenderCopy(renderer, texture, SDL2.SDL_Rect.alloc({ x: 0, y: 0, w: IMAGE_WIDTH, h: IMAGE_HEIGHT }), ref.NULL);
-    SDL2.SDL_RenderPresent(renderer);
+    // Draw the image texture.
+    SDL.SDL_RenderCopy(gRendererPtr, gTexturePtr, null, null);
+
+    // Present the frame on screen.
+    SDL.SDL_RenderPresent(gRendererPtr);
 }
+
+setup();
+loop();

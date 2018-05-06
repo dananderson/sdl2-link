@@ -14,12 +14,17 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const SDL_LIBRARIES = {
-    'SDL2': require('./lib/util-sdl2-library'),
-    'SDL2_image': require('./lib/util-sdl2-image-library'),
-    'SDL2_ttf': require('./lib/util-sdl2-ttf-library'),
-    'SDL2_mixer': require('./lib/util-sdl2-mixer-library'),
-};
+const SDL = 'SDL2';
+const SDL_IMAGE = 'SDL2_image';
+const SDL_TTF = 'SDL2_ttf';
+const SDL_MIXER = 'SDL2_mixer';
+
+const SDL_LIBRARIES = {};
+
+SDL_LIBRARIES[SDL] = require('./lib/util-sdl2-library');
+SDL_LIBRARIES[SDL_IMAGE] = require('./lib/util-sdl2-image-library');
+SDL_LIBRARIES[SDL_TTF] = require('./lib/util-sdl2-ttf-library');
+SDL_LIBRARIES[SDL_MIXER] = require('./lib/util-sdl2-mixer-library');
 
 function extendType(ref, type) {
     type.alloc = jsObject => ref.alloc(type, jsObject);
@@ -27,54 +32,97 @@ function extendType(ref, type) {
     return type;
 }
 
-function loadFFIPackage(options) {
-    let ffi;
+function getNativeFunctionCallHandler(options) {
+    if (!options.ffi) {
+        try {
+            options.ffi = require('ffi-napi');
+        } catch (e) {
+            throw new Error('Missing ffi. ffi must be passed in through options or the ffi-napi module must be installed.');
+        }
+    }
 
-    console.assert(options.ffi, 'ffi implementation not provided.');
-    console.assert(options.ref, 'ref implementation not provided.');
+    if (typeof options.fastcall === 'string' || options.fastcall instanceof String) {
+        if (!options.ref) {
+            try {
+                options.ref = require('ref-napi');
+            } catch (e) {
+                throw new Error('Missing ref. ref must be passed in through options or the ref-napi module must be installed.');
+            }
+        }
+    } else {
+        if (!options.fastcall) {
+            try {
+                options.fastcall = require('fastcall');
+            } catch (e) {
+                throw new Error('Missing fastcall. fastcall must be passed in through options or the fastcall module ' +
+                    'must be installed. To exclude fastcall usage, use the option - fastcall: \'exclude\'');
+            }
+        }
 
-    ffi = {
-        ffi: options.ffi,
-        ref: options.ref,
-        Array: require('ref-array-di')(options.ref),
-        Struct: require('ref-struct-di')(options.ref),
-        Union: require('ref-union-di')(options.ref),
+        if (!options.ref) {
+            options.ref = options.fastcall.ref;
+        }
+    }
+
+    const ref = options.ref;
+    const ffi = options.ffi;
+
+    const StructType = ffi.StructType || require('ref-struct-di')(ref);
+    const UnionType = ffi.UnionType || require('ref-union-di')(ref);
+
+    return {
+        ffi: ffi,
+        ref: ref,
+        fastcall: options.fastcall,
+        Array: ffi.ArrayType || require('ref-array-di')(ref),
+        Struct: definition => extendType(ref, StructType(definition)),
+        Union: definition => extendType(ref, UnionType(definition)),
     };
-
-    const ref = ffi.ref;
-    const UnionType = ffi.Union;
-    const StructType = ffi.Struct;
-
-    ffi.Union = definition => extendType(ref, UnionType(definition));
-    ffi.Struct = definition => extendType(ref, StructType(definition));
-
-    return ffi;
 }
 
-module.exports = function(options) {
-    const ffi = loadFFIPackage(options);
+function link(options) {
+    options = options || {};
+    
+    const nativeFunctionCallHandler = getNativeFunctionCallHandler(options);
 
-    let libs = [ 'SDL2' ];
+    let libs = [ SDL ];
 
-    if (Array.isArray(options.extensions)) {
-        libs = libs.concat(options.extensions);
+    if (options.extensions) {
+        if (Array.isArray(options.extensions)) {
+            libs = libs.concat(options.extensions);
+        } else {
+            libs.push(options.extensions);
+        }
     }
 
     libs.forEach((i) => {
-        console.assert(i in SDL_LIBRARIES, `Invalid SDL library name: ${i}. Available library names: '${Object.keys(SDL_LIBRARIES).join(', ')}'`);
+        if (!(i in SDL_LIBRARIES)) {
+            throw new Error(`Invalid SDL library name: ${i}. Available library names: '${Object.keys(SDL_LIBRARIES).join(', ')}'`);
+        }
     });
 
     const lib = {};
 
-    SDL_LIBRARIES['SDL2'].loadConstantsAndTypes(ffi, lib);
+    SDL_LIBRARIES[SDL].loadConstantsAndTypes(nativeFunctionCallHandler, lib);
 
     libs.forEach((i) => {
-        if (i !== 'SDL2') {
-            SDL_LIBRARIES[i].loadConstantsAndTypes(ffi, lib);
+        if (i !== SDL) {
+            SDL_LIBRARIES[i].loadConstantsAndTypes(nativeFunctionCallHandler, lib);
         }
 
-        SDL_LIBRARIES[i].loadFunctions(ffi, lib);
+        SDL_LIBRARIES[i].loadFunctions(nativeFunctionCallHandler, lib);
     });
 
+    lib.ref = options.ref;
+    lib.readCString = options.ref.readCString;
+
+    if (options.fastcall) {
+        lib.allocCString = options.fastcall.makeStringBuffer;
+    } else {
+        lib.allocCString = options.ref.allocCString;
+    }
+
     return lib;
-};
+}
+
+module.exports = link;

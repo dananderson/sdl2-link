@@ -1,42 +1,101 @@
-const ref = require('ref-napi');
-const ffi = require('ffi-napi');
-const SDL2 = require('sdl2-link')({ ffi: ffi, ref: ref, extensions: [ 'SDL2_ttf' ] });
+/*
+ * Copyright 2018 Daniel Anderson
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+ * is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
-SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO);
+const SDL = require('sdl2-link')({ extensions: 'SDL2_ttf' });
 
-const window = SDL2.SDL_CreateWindow(ref.allocCString("Render Text"), SDL2.SDL_WINDOWPOS_CENTERED, SDL2.SDL_WINDOWPOS_CENTERED, 960, 480, 0);
-const renderer = SDL2.SDL_CreateRenderer(window, -1, SDL2.SDL_WindowFlags.SDL_WINDOW_OPENGL);
+let gWindowPtr;
+let gRendererPtr;
+let gMessageTexturePtr;
 
-SDL2.TTF_Init();
+function setup() {
+    // Initialize SDL video and the font extension.
+    SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
+    SDL.TTF_Init();
 
-const openSans = SDL2.TTF_OpenFont(ref.allocCString("OpenSans-Regular.ttf"), 36);
-const messageSurface = SDL2.TTF_RenderText_Blended(openSans, ref.allocCString('Press any key to exit'), {r: 255, g: 255, b: 255, a: 255});
-const messageWidth = messageSurface.deref().w;
-const messageHeight = messageSurface.deref().h;
-const messageTexture = SDL2.SDL_CreateTextureFromSurface(renderer, messageSurface);
+    // Allocate buffers for the window and renderer references. In C terms, these buffers are analogous to a SDL_Window**
+    // and SDL_Renderer**.
+    const windowPtrPtr = SDL.ref.alloc('void*');
+    const rendererPtrPtr = SDL.ref.alloc('void*');
 
-SDL2.SDL_FreeSurface(messageSurface);
+    // Create an SDL window.
+    SDL.SDL_CreateWindowAndRenderer(
+        800,
+        600,
+        SDL.SDL_WindowFlags.SDL_WINDOW_OPENGL,
+        windowPtrPtr,
+        rendererPtrPtr);
 
-loop();
+    // Dereference the window and renderer buffers so they are usable by SDL functions. In C terms, these buffers are now
+    // analogous to SDL_Window* and SDL_Renderer*.
+    gWindowPtr = windowPtrPtr.deref();
+    gRendererPtr = rendererPtrPtr.deref();
+
+    // Render a string to a texture.
+    const openSans = SDL.TTF_OpenFont(SDL.allocCString("OpenSans-Regular.ttf"), 36);
+    const messageSurfacePtr = SDL.TTF_RenderText_Blended(openSans, SDL.allocCString('Press any key to exit'), { r: 0xFF, g: 0xFF, b: 0xFF });
+
+    gMessageTexturePtr = SDL.SDL_CreateTextureFromSurface(gRendererPtr, messageSurfacePtr);
+
+    SDL.SDL_FreeSurface(messageSurfacePtr);
+}
+
+function shutdown() {
+    // Clean up renderer and window.
+    SDL.SDL_DestroyTexture(gMessageTexturePtr);
+    SDL.SDL_DestroyRenderer(gRendererPtr);
+    SDL.SDL_DestroyWindow(gWindowPtr);
+
+    // Clean up the font extension and SDL itself.
+    SDL.SDL_Quit();
+    SDL.SDL_Quit();
+}
 
 function loop() {
-    const eventRef = SDL2.SDL_Event.alloc();
+    const eventRef = new SDL.SDL_Event().ref();
 
-    while (SDL2.SDL_PollEvent(eventRef)) {
-        if (eventRef.deref().type === SDL2.SDL_EventType.SDL_KEYUP) {
-            SDL2.SDL_DestroyRenderer(renderer);
-            SDL2.SDL_DestroyWindow(window);
-            SDL2.TTF_Quit();
-            SDL2.SDL_Quit();
+    while (SDL.SDL_PollEvent(eventRef)) {
+        if (eventRef.deref().type === SDL.SDL_EventType.SDL_KEYUP
+                || eventRef.deref().type === SDL.SDL_EventType.SDL_QUIT) {
+            shutdown();
             return;
         }
     }
 
+    // Schedule the next frame @ 60 fps.
     setTimeout(loop, 1000 / 60);
 
-    SDL2.SDL_SetRenderDrawColor(renderer, 0, 0, 200, 255);
-    SDL2.SDL_RenderClear(renderer);
-    SDL2.SDL_RenderCopy(renderer, messageTexture, SDL2.SDL_Rect.alloc({ x: 0, y: 0, w: messageWidth, h: messageHeight }),
-        SDL2.SDL_Rect.alloc({ x: 960 / 2 - messageWidth / 2, y: 480 / 2 - messageHeight / 2, w: messageWidth, h: messageHeight }));
-    SDL2.SDL_RenderPresent(renderer);
+    const { width, height } = getTextureSize(gMessageTexturePtr);
+    const destRect = new SDL.SDL_Rect({x: 800 / 2 - width / 2, y: 600 / 2 - height / 2, w: width, h: height });
+
+    // Draw the text centered on the screen.
+    SDL.SDL_SetRenderDrawColor(gRendererPtr, 0, 0, 200, 255);
+    SDL.SDL_RenderClear(gRendererPtr);
+    SDL.SDL_RenderCopy(gRendererPtr, gMessageTexturePtr, null, destRect.ref());
+
+    // Present the frame on screen.
+    SDL.SDL_RenderPresent(gRendererPtr);
 }
+
+function getTextureSize(texturePtr) {
+    const widthPtr = SDL.ref.alloc('int'), heightPtr = SDL.ref.alloc('int');
+
+    SDL.SDL_QueryTexture(gMessageTexturePtr, null, null, widthPtr, heightPtr);
+
+    return { width: widthPtr.deref() , height: heightPtr.deref() };
+}
+
+setup();
+loop();
