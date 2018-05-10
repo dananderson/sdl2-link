@@ -42,6 +42,7 @@ function getNativeFunctionCallHandler(options) {
     }
 
     if (typeof options.fastcall === 'string' || options.fastcall instanceof String) {
+        options.fastcall = null;
         if (!options.ref) {
             try {
                 options.ref = require('ref-napi');
