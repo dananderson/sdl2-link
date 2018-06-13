@@ -17,31 +17,22 @@
 const sdl2link = require('..');
 const assert = require('chai').assert;
 
-describe("SDL2_image Test", () => {
-    describe("load()", () => {
-        it("should load with fastcall", () => {
-            const SDL = sdl2link()
-                .withFastcall(require('fastcall'))
-                .withImage()
-                .load();
-
-            checkImageVersion(SDL);
-
+describe("SDL2 Image Test", () => {
+    describe("load() with fastcall", () => {
+        it("should load SDL2 Image APIs", () => {
+            testImageLibraryVersion(sdl2link().withFastcall(require('fastcall')))
         });
-        it("should load with ffi", () => {
-            const SDL = sdl2link()
-                .withFFI(require('ffi-napi'), require('ref-napi'))
-                .withImage()
-                .load();
-
-            checkImageVersion(SDL);
-
+    });
+    describe("load() with ffi", () => {
+        it("should load SDL2 Image APIs", () => {
+            testImageLibraryVersion(sdl2link().withFFI(require('ffi-napi'), require('ref-napi')))
         });
     });
 });
 
-function checkImageVersion(SDL) {
-    let version = SDL.IMG_Linked_Version().deref();
+function testImageLibraryVersion(loader) {
+    const SDL = loader.withImage().load();
+    const version = SDL.toObject(SDL.IMG_Linked_Version());
 
     assert.isAtLeast(version.major, 2);
     assert.isAtLeast(version.minor, 0);

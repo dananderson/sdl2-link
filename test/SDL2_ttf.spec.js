@@ -17,31 +17,22 @@
 const sdl2link = require('..');
 const assert = require('chai').assert;
 
-describe("SDL2_ttf Test", () => {
-    describe("load()", () => {
-        it("should load with fastcall", () => {
-            const SDL = sdl2link()
-                .withFastcall(require('fastcall'))
-                .withTTF()
-                .load();
-
-            checkTTFVersion(SDL);
-
+describe("SDL2 TTF Test", () => {
+    describe("load() with fastcall", () => {
+        it("should load SDL2 TTF APIs", () => {
+            testFontLibraryVersion(sdl2link().withFastcall(require('fastcall')))
         });
-        it("should load with ffi", () => {
-            const SDL = sdl2link()
-                .withFFI(require('ffi-napi'), require('ref-napi'))
-                .withTTF()
-                .load();
-
-            checkTTFVersion(SDL);
-
+    });
+    describe("load() with ffi", () => {
+        it("should load SDL2 TTF APIs", () => {
+            testFontLibraryVersion(sdl2link().withFFI(require('ffi-napi'), require('ref-napi')))
         });
     });
 });
 
-function checkTTFVersion(SDL) {
-    let version = SDL.TTF_Linked_Version().deref();
+function testFontLibraryVersion(loader) {
+    const SDL = loader.withTTF().load();
+    const version = SDL.toObject(SDL.TTF_Linked_Version());
 
     assert.isAtLeast(version.major, 2);
     assert.isAtLeast(version.minor, 0);

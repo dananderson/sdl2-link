@@ -68,11 +68,10 @@ function shutdown() {
 }
 
 function loop() {
-    const eventRef = new SDL.SDL_Event().ref();
+    const event = new SDL.SDL_Event();
 
-    while (SDL.SDL_PollEvent(eventRef)) {
-        if (eventRef.deref().type === SDL.SDL_EventType.SDL_KEYUP
-                || eventRef.deref().type === SDL.SDL_EventType.SDL_QUIT) {
+    while (SDL.SDL_PollEvent(event.ref())) {
+        if (event.type === SDL.SDL_EventType.SDL_KEYUP || event.type === SDL.SDL_EventType.SDL_QUIT) {
             shutdown();
             return;
         }
@@ -96,7 +95,7 @@ function loop() {
 function getTextureSize(texturePtr) {
     const widthPtr = SDL.ref.alloc('int'), heightPtr = SDL.ref.alloc('int');
 
-    SDL.SDL_QueryTexture(gMessageTexturePtr, null, null, widthPtr, heightPtr);
+    SDL.SDL_QueryTexture(texturePtr, null, null, widthPtr, heightPtr);
 
     return { width: widthPtr.deref() , height: heightPtr.deref() };
 }

@@ -1,14 +1,13 @@
 {
   "name": "sdl2-link",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "index.js",
   "description": "SDL2 bindings for Node",
   "requires": true,
   "dependencies": {
-    "is-little-endian": "0.0.0",
-    "ref-array-di": "1.2.1",
-    "ref-struct-di": "1.1.0",
-    "ref-union-di": "1.0.1"
+    "ref-array-di": "^1.2.1",
+    "ref-struct-di": "^1.1.0",
+    "ref-union-di": "^1.0.1"
   },
   "devDependencies": {
     "chai": "^4.1.2",

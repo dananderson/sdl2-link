@@ -17,31 +17,22 @@
 const sdl2link = require('..');
 const assert = require('chai').assert;
 
-describe("SDL2_mixer Test", () => {
-    describe("load()", () => {
-        it("should load with fastcall", () => {
-            const SDL = sdl2link()
-                .withFastcall(require('fastcall'))
-                .withMixer()
-                .load();
-
-            checkMixerVersion(SDL);
-
+describe("SDL2 Mixer Test", () => {
+    describe("load() with fastcall", () => {
+        it("should load SDL2 Mixer APIs", () => {
+            testMixerLibraryVersion(sdl2link().withFastcall(require('fastcall')))
         });
-        it("should load with ffi", () => {
-            const SDL = sdl2link()
-                .withFFI(require('ffi-napi'), require('ref-napi'))
-                .withMixer()
-                .load();
-
-            checkMixerVersion(SDL);
-
+    });
+    describe("load() with ffi", () => {
+        it("should load SDL2 Mixer APIs", () => {
+            testMixerLibraryVersion(sdl2link().withFFI(require('ffi-napi'), require('ref-napi')))
         });
     });
 });
 
-function checkMixerVersion(SDL) {
-    let version = SDL.Mix_Linked_Version().deref();
+function testMixerLibraryVersion(loader) {
+    const SDL = loader.withMixer().load();
+    const version = SDL.toObject(SDL.Mix_Linked_Version());
 
     assert.isAtLeast(version.major, 2);
     assert.isAtLeast(version.minor, 0);
