@@ -14,7 +14,11 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const SDL = require('sdl2-link')({ extensions: 'SDL2_image' });
+const sdl2link = require('sdl2-link');
+const SDL = sdl2link()
+    .withFastcall(require('fastcall'))
+    .withImage()
+    .load();
 
 let gWindowPtr;
 let gRendererPtr;
@@ -44,7 +48,7 @@ function setup() {
     gRendererPtr = rendererPtrPtr.deref();
 
     // Use the image extension to load an image from file into an SDL texture.
-    gTexturePtr = SDL.IMG_LoadTexture(gRendererPtr, SDL.allocCString('sample.jpeg'));
+    gTexturePtr = SDL.IMG_LoadTexture(gRendererPtr, SDL.toCString('sample.jpeg'));
 }
 
 function shutdown() {

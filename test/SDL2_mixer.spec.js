@@ -14,6 +14,36 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const Loader = require('./lib/Loader');
+const sdl2link = require('..');
+const assert = require('chai').assert;
 
-module.exports = () => new Loader();
+describe("SDL2_mixer Test", () => {
+    describe("load()", () => {
+        it("should load with fastcall", () => {
+            const SDL = sdl2link()
+                .withFastcall(require('fastcall'))
+                .withMixer()
+                .load();
+
+            checkMixerVersion(SDL);
+
+        });
+        it("should load with ffi", () => {
+            const SDL = sdl2link()
+                .withFFI(require('ffi-napi'), require('ref-napi'))
+                .withMixer()
+                .load();
+
+            checkMixerVersion(SDL);
+
+        });
+    });
+});
+
+function checkMixerVersion(SDL) {
+    let version = SDL.Mix_Linked_Version().deref();
+
+    assert.isAtLeast(version.major, 2);
+    assert.isAtLeast(version.minor, 0);
+    assert.isAtLeast(version.patch, 2);
+}

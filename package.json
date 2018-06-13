@@ -1,6 +1,6 @@
 {
   "name": "sdl2-link",
-  "version": "1.1.4",
+  "version": "2.0.0",
   "main": "index.js",
   "description": "SDL2 bindings for Node",
   "requires": true,
@@ -10,13 +10,15 @@
     "ref-struct-di": "1.1.0",
     "ref-union-di": "1.0.1"
   },
-  "optionalDependencies": {
-    "fastcall": "0.2.6",
-    "ffi-napi": "2.4.3",
-    "ref-napi": "1.4.0"
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.1.1",
+    "fastcall": "^0.2.6",
+    "ffi-napi": "^2.4.3",
+    "ref-napi": "^1.4.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/.bin/mocha --reporter spec \"test/**/*.spec.js\""
   },
   "repository": {
     "type": "git",

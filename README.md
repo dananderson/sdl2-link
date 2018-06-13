@@ -1,6 +1,6 @@
 # sdl2-link
 
-Node bindings for SDL 2.0, SDL_image, SDL_mixer and SDL_ttf.
+Node bindings for SDL 2.0, SDL2_image, SDL2_mixer and SDL2_ttf.
 
 ## Installation
 
@@ -10,24 +10,29 @@ npm install sdl2-link
 
 ## Usage
 
-Load SDL.
+### SDL2 API
 
 ```javascript
-// Load the SDL library, including constants, structs, unions and functions.
-const SDL = require('sdl2-link')()
+import sdl2link from 'sdl2-link';
 
-// Start making calls to SDL2.
+const SDL = sdl2link()
+    .withFastcall(require('fastcall'))
+    .load();
+
 SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
 ```
 
-Load SDL with extensions. SDL_ttf, SDL_image and SDL_mixer are supported extensions.
+### SDL2 Extensions
 
 ```javascript
-// Load the SDL library with the SDL_ttf extension.
-const SDL = require('sdl2-link')({ extensions: [ 'SDL_ttf' ] });
+import sdl2link from 'sdl2-link';
 
-// Start making calls to SDL.
+const SDL = sdl2link()
+    .withFastcall(require('fastcall'))
+    .withTTF()
+    .load();
+
 SDL.TTF_Init();
 SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
@@ -41,9 +46,5 @@ The namespace (object) sdl2-link returns contains constants, structs and functio
 - [SDL2_ttf](https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf.html)
 - [SDL2_image](https://www.libsdl.org/projects/SDL_image/docs/SDL_image.html)
 - [SDL2_mixer](https://www.libsdl.org/projects/SDL_mixer/docs/index.html)
-
-## Notes
-
-- [fastcall](https://www.npmjs.com/package/fastcall) has a compatible FFI API, but it does not currently support some SDL function signatures (structs by value).
 
  

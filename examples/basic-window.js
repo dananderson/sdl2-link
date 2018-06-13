@@ -14,7 +14,10 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const SDL = require('sdl2-link')();
+const sdl2link = require('sdl2-link');
+const SDL = sdl2link()
+    .withFastcall(require('fastcall'))
+    .load();
 
 let gWindowPtr;
 let gRendererPtr;

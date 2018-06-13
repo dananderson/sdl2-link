@@ -14,6 +14,36 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const Loader = require('./lib/Loader');
+const sdl2link = require('..');
+const assert = require('chai').assert;
 
-module.exports = () => new Loader();
+describe("SDL2_ttf Test", () => {
+    describe("load()", () => {
+        it("should load with fastcall", () => {
+            const SDL = sdl2link()
+                .withFastcall(require('fastcall'))
+                .withTTF()
+                .load();
+
+            checkTTFVersion(SDL);
+
+        });
+        it("should load with ffi", () => {
+            const SDL = sdl2link()
+                .withFFI(require('ffi-napi'), require('ref-napi'))
+                .withTTF()
+                .load();
+
+            checkTTFVersion(SDL);
+
+        });
+    });
+});
+
+function checkTTFVersion(SDL) {
+    let version = SDL.TTF_Linked_Version().deref();
+
+    assert.isAtLeast(version.major, 2);
+    assert.isAtLeast(version.minor, 0);
+    assert.isAtLeast(version.patch, 3);
+}

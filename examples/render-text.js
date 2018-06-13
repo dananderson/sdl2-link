@@ -14,7 +14,11 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const SDL = require('sdl2-link')({ extensions: 'SDL2_ttf' });
+const sdl2link = require('sdl2-link');
+const SDL = sdl2link()
+    .withFastcall(require('fastcall'))
+    .withTTF()
+    .load();
 
 let gWindowPtr;
 let gRendererPtr;
@@ -44,8 +48,8 @@ function setup() {
     gRendererPtr = rendererPtrPtr.deref();
 
     // Render a string to a texture.
-    const openSans = SDL.TTF_OpenFont(SDL.allocCString("OpenSans-Regular.ttf"), 36);
-    const messageSurfacePtr = SDL.TTF_RenderText_Blended(openSans, SDL.allocCString('Press any key to exit'), { r: 0xFF, g: 0xFF, b: 0xFF });
+    const openSans = SDL.TTF_OpenFont(SDL.toCString("OpenSans-Regular.ttf"), 36);
+    const messageSurfacePtr = SDL.TTF_RenderText_Blended(openSans, SDL.toCString('Press any key to exit'), 0xFFFFFFFF);
 
     gMessageTexturePtr = SDL.SDL_CreateTextureFromSurface(gRendererPtr, messageSurfacePtr);
 
